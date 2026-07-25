@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 const sky = '#0EA5E9';
 const skySoft = '#E0F2FE';
@@ -525,16 +525,41 @@ export const myChoiceStyles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    alignItems: 'stretch',
+    width: '100%',
+    minHeight: '100%',
     backgroundColor: 'rgba(31, 31, 31, 0.36)',
   },
+  modalSheetWrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
   modalSheet: {
-    maxHeight: '94%',
+    width: '100%',
+    alignSelf: 'stretch',
+    height: '100%',
+    maxHeight: '100%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingBottom: Spacing.three,
     gap: Spacing.two,
+  },
+  uploadKeyboardAvoider: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  uploadModalWrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  uploadModalSheet: {
+    maxHeight: '100%',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   modalHandle: {
     width: 44,
@@ -549,7 +574,10 @@ export const myChoiceStyles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
-  modalList: { gap: Spacing.three },
+  modalList: {
+    gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
   modalDressRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -566,6 +594,10 @@ export const myChoiceStyles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: Spacing.three,
+    marginTop: 'auto',
+  },
+  modalFooter: {
+    marginTop: 'auto',
   },
   modalActionButton: {
     flex: 1,
@@ -604,9 +636,16 @@ export const myChoiceStyles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: skySoft,
   },
+  uploadScroll: {
+    flexGrow: 0,
+  },
   uploadForm: {
     gap: Spacing.three,
-    paddingBottom: Spacing.two,
+    paddingBottom: Spacing.one,
+  },
+  uploadFooter: {
+    paddingTop: Spacing.two,
+    marginTop: 'auto',
   },
   categoryDropdown: {
     minHeight: 48,

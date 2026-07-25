@@ -62,7 +62,7 @@ export function DressPickerModal({
     <>
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
         <Pressable style={styles.modalBackdrop} onPress={onClose}>
-          <Pressable onPress={(event) => event.stopPropagation()}>
+          <Pressable onPress={(event) => event.stopPropagation()} style={styles.modalSheetWrap}>
             <ThemedView style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>

@@ -46,6 +46,7 @@ const PICKER_PAGE_SIZE = 12;
 const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const todayKey = () => toDateKey(new Date());
+const suggestionKeyForUser = (userId: string) => `${LAST_SUGGESTION_KEY}:${userId}`;
 
 export function MyChoice({ initialSection = 'today' }: Props) {
   const theme = useTheme();
@@ -112,6 +113,42 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   const plannedByDate = useMemo(() => new Map(plans.map((plan) => [plan.date, plan])), [plans]);
   const currentPlan = plannedByDate.get(selectedDate);
   const todayPlan = plannedByDate.get(todayKey());
+  const isAnyModalOpen = isPickerOpen || !!suggestedDress || isUploadOpen || !!actionModal;
+
+  const resetUserScopedState = useCallback(() => {
+    setDresses([]);
+    setOutfitDresses([]);
+    setOutfitSearch('');
+    setOutfitCategory('all');
+    setOutfitPage(1);
+    setOutfitPages(1);
+    setOutfitTotal(0);
+    setOutfitsError('');
+    setPickerDresses([]);
+    setPickerSearch('');
+    setPickerCategory('all');
+    setPickerPage(1);
+    setPickerPages(1);
+    setPickerTotal(0);
+    setPickerError('');
+    setPlans([]);
+    setSelectedDate(todayKey());
+    setVisibleMonth(startOfMonth(new Date()));
+    setDressName('');
+    setDressCategory('modern');
+    setPickedImage(null);
+    setSuggestedDress(null);
+    setIsPickerOpen(false);
+    setIsUploadOpen(false);
+    setSelectedDressAction(null);
+    setPauseDuration('week');
+    setEditName('');
+    setEditCategory('modern');
+    setHistoryMonth(startOfMonth(new Date()));
+    setHistoryPlans([]);
+    setHistoryError('');
+    setActionModal(null);
+  }, []);
 
   useEffect(() => {
     sectionProgress.setValue(0);
@@ -183,10 +220,10 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   }, [pickerCategory, pickerPage, pickerSearch]);
 
   const openAutomaticSuggestion = useCallback(
-    async (nextDresses: Dress[], nextPlans: PlannedOutfit[]) => {
+    async (nextDresses: Dress[], nextPlans: PlannedOutfit[], userId: string) => {
       const current = todayKey();
       const hasTodayPlan = nextPlans.some((plan) => plan.date === current);
-      const lastSuggestion = await AsyncStorage.getItem(LAST_SUGGESTION_KEY);
+      const lastSuggestion = await AsyncStorage.getItem(suggestionKeyForUser(userId));
 
       if (lastSuggestion === current || hasTodayPlan || nextDresses.length === 0) return;
 
@@ -194,7 +231,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
       if (suggestion) {
         setSelectedDate(current);
         setSuggestedDress(suggestion);
-        await AsyncStorage.setItem(LAST_SUGGESTION_KEY, current);
+        await AsyncStorage.setItem(suggestionKeyForUser(userId), current);
       }
     },
     []
@@ -221,24 +258,31 @@ export function MyChoice({ initialSection = 'today' }: Props) {
       setIsBooting(true);
       setNetworkError('');
       const token = await loadToken();
-      if (!token) return;
+      if (!token) {
+        resetUserScopedState();
+        setUser(null);
+        return;
+      }
       const profile = await myChoiceApi.profile();
       if (!isMounted()) return;
+      resetUserScopedState();
       setUser(profile);
       const { nextDresses, nextPlans } = await refresh();
       if (!isMounted()) return;
-      await openAutomaticSuggestion(nextDresses, nextPlans);
+      await openAutomaticSuggestion(nextDresses, nextPlans, profile._id);
     } catch (error) {
       if (isNetworkError(error)) {
         setNetworkError(error.message);
       } else {
         await clearToken();
+        resetUserScopedState();
+        setUser(null);
         setStatus(error instanceof Error ? error.message : 'Please sign in again.');
       }
     } finally {
       if (isMounted()) setIsBooting(false);
     }
-  }, [openAutomaticSuggestion, refresh]);
+  }, [openAutomaticSuggestion, refresh, resetUserScopedState]);
 
   useEffect(() => {
     let isMounted = true;
@@ -268,9 +312,10 @@ export function MyChoice({ initialSection = 'today' }: Props) {
         setIsBusy(true);
         const result = await myChoiceApi.googleSignIn(idToken);
         await saveToken(result.token);
+        resetUserScopedState();
         setUser(result.user);
         const data = await refresh();
-        await openAutomaticSuggestion(data.nextDresses, data.nextPlans);
+        await openAutomaticSuggestion(data.nextDresses, data.nextPlans, result.user._id);
         setStatus('');
       } catch (error) {
         setStatus(error instanceof Error ? error.message : 'Google sign in failed.');
@@ -280,7 +325,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
     }
 
     finishGoogleLogin();
-  }, [openAutomaticSuggestion, refresh, response]);
+  }, [openAutomaticSuggestion, refresh, resetUserScopedState, response]);
 
   async function handleEmailAuth() {
     const cleanName = authName.trim();
@@ -299,10 +344,11 @@ export function MyChoice({ initialSection = 'today' }: Props) {
           ? await myChoiceApi.register(cleanName, cleanEmail, authPassword)
           : await myChoiceApi.login(cleanEmail, authPassword);
       await saveToken(result.token);
+      resetUserScopedState();
       setUser(result.user);
       setAuthPassword('');
       const data = await refresh();
-      await openAutomaticSuggestion(data.nextDresses, data.nextPlans);
+      await openAutomaticSuggestion(data.nextDresses, data.nextPlans, result.user._id);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not sign in.');
     } finally {
@@ -313,11 +359,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   async function handleSignOut() {
     await clearToken();
     setUser(null);
-    setDresses([]);
-    setOutfitDresses([]);
-    setPickerDresses([]);
-    setPlans([]);
-    setSuggestedDress(null);
+    resetUserScopedState();
   }
 
   async function openDressPicker(dateKey: string, preferSuggestion = false) {
@@ -728,11 +770,13 @@ export function MyChoice({ initialSection = 'today' }: Props) {
 
           {!!status && <ThemedText style={styles.statusText}>{status}</ThemedText>}
         </ScrollView>
-        <FloatingMenu
-          section={section}
-          onChange={setSection}
-          backgroundColor={theme.backgroundElement}
-        />
+        {!isAnyModalOpen && (
+          <FloatingMenu
+            section={section}
+            onChange={setSection}
+            backgroundColor={theme.backgroundElement}
+          />
+        )}
       </SafeAreaView>
 
       <DressPickerModal

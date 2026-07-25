@@ -44,7 +44,7 @@ export function PauseSuggestionModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
       <Pressable style={styles.modalBackdrop} onPress={onCancel}>
-        <Pressable onPress={(event) => event.stopPropagation()}>
+        <Pressable onPress={(event) => event.stopPropagation()} style={styles.modalSheetWrap}>
           <ThemedView style={styles.modalSheet}>
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
@@ -71,13 +71,15 @@ export function PauseSuggestionModal({
               );
             })}
           </View>
-          {isBusy ? (
-            <SkeletonBlock style={styles.skeletonButtonFull} />
-          ) : (
-            <Pressable onPress={onConfirm} style={styles.primaryButton}>
-              <ThemedText style={styles.primaryButtonText}>Confirm</ThemedText>
-            </Pressable>
-          )}
+          <View style={styles.modalFooter}>
+            {isBusy ? (
+              <SkeletonBlock style={styles.skeletonButtonFull} />
+            ) : (
+              <Pressable onPress={onConfirm} style={styles.primaryButton}>
+                <ThemedText style={styles.primaryButtonText}>Confirm</ThemedText>
+              </Pressable>
+            )}
+          </View>
           </ThemedView>
         </Pressable>
       </Pressable>
@@ -109,7 +111,7 @@ export function EditDressModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
       <Pressable style={styles.modalBackdrop} onPress={onCancel}>
-        <Pressable onPress={(event) => event.stopPropagation()}>
+        <Pressable onPress={(event) => event.stopPropagation()} style={styles.modalSheetWrap}>
           <ThemedView style={styles.modalSheet}>
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
@@ -146,13 +148,15 @@ export function EditDressModal({
               </Pressable>
             ))}
           </View>
-          {isBusy ? (
-            <SkeletonBlock style={styles.skeletonButtonFull} />
-          ) : (
-            <Pressable onPress={onSave} style={styles.primaryButton}>
-              <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>
-            </Pressable>
-          )}
+          <View style={styles.modalFooter}>
+            {isBusy ? (
+              <SkeletonBlock style={styles.skeletonButtonFull} />
+            ) : (
+              <Pressable onPress={onSave} style={styles.primaryButton}>
+                <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>
+              </Pressable>
+            )}
+          </View>
           </ThemedView>
         </Pressable>
       </Pressable>
@@ -188,7 +192,7 @@ export function DressCalendarModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onBack}>
       <Pressable style={styles.modalBackdrop} onPress={onBack}>
-        <Pressable onPress={(event) => event.stopPropagation()}>
+        <Pressable onPress={(event) => event.stopPropagation()} style={styles.modalSheetWrap}>
           <ThemedView style={styles.modalSheet}>
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
