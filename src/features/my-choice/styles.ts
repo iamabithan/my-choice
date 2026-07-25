@@ -96,6 +96,11 @@ export const myChoiceStyles = StyleSheet.create({
     gap: Spacing.three,
     paddingTop: Spacing.two,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   section: { gap: Spacing.three },
   pageHeader: {
     flexDirection: 'row',

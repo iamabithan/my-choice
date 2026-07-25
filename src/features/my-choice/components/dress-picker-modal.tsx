@@ -77,7 +77,7 @@ export function DressPickerModal({
               </Pressable>
             </View>
             {suggestedDress ? (
-              <DressFeature title="Random pick, not worn this week" dress={suggestedDress} compact />
+              <DressFeature title="Smart wardrobe pick" dress={suggestedDress} compact />
             ) : (
               <View style={styles.searchRow}>
                 <TextInput

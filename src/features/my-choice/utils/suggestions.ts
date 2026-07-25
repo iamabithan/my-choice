@@ -2,40 +2,52 @@ import { addDays, fromDateKey, toDateKey } from '@/lib/dates';
 
 import type { Dress, PlannedOutfit } from '../types';
 
-function startOfSuggestionWeek(dateKey: string) {
-  return toDateKey(addDays(fromDateKey(dateKey), -6));
+function isPausedForSuggestion(dress: Dress, now: number) {
+  return (
+    dress.suggestionPausedForever ||
+    (dress.suggestionPausedUntil ? Date.parse(dress.suggestionPausedUntil) > now : false)
+  );
 }
 
-export function getDressesNotWornThisWeek(
+export function getAvailableDresses(dresses: Dress[]) {
+  const now = Date.now();
+  return dresses.filter((dress) => !isPausedForSuggestion(dress, now));
+}
+
+export function getDressesNotWornYet(
   dresses: Dress[],
   plans: PlannedOutfit[],
   dateKey: string
 ) {
-  const weekStart = startOfSuggestionWeek(dateKey);
-  const now = Date.now();
+  const availableDresses = getAvailableDresses(dresses);
   const wornDressIds = new Set(
     plans
-      .filter((plan) => plan.date >= weekStart && plan.date < dateKey)
+      .filter((plan) => plan.date < dateKey)
       .map((plan) => plan.dressId?._id)
   );
 
-  return dresses.filter((dress) => {
-    const isPaused =
-      dress.suggestionPausedForever ||
-      (dress.suggestionPausedUntil ? Date.parse(dress.suggestionPausedUntil) > now : false);
-    return !isPaused && !wornDressIds.has(dress._id);
-  });
+  return availableDresses.filter((dress) => !wornDressIds.has(dress._id));
+}
+
+function avoidPreviousDayCategory(
+  dresses: Dress[],
+  plans: PlannedOutfit[],
+  dateKey: string
+) {
+  const previousDateKey = toDateKey(addDays(fromDateKey(dateKey), -1));
+  const previousCategory = plans.find((plan) => plan.date === previousDateKey)?.dressId?.category;
+
+  if (!previousCategory) return dresses;
+
+  const rotatedDresses = dresses.filter((dress) => dress.category !== previousCategory);
+  return rotatedDresses.length > 0 ? rotatedDresses : dresses;
 }
 
 export function pickRandomSuggestion(dresses: Dress[], plans: PlannedOutfit[], dateKey: string) {
-  const eligibleDresses = getDressesNotWornThisWeek(dresses, plans, dateKey);
-  const now = Date.now();
-  const availableDresses = dresses.filter(
-    (dress) =>
-      !dress.suggestionPausedForever &&
-      !(dress.suggestionPausedUntil ? Date.parse(dress.suggestionPausedUntil) > now : false)
-  );
-  const suggestionPool = eligibleDresses.length > 0 ? eligibleDresses : availableDresses;
+  const availableDresses = getAvailableDresses(dresses);
+  const unwornDresses = getDressesNotWornYet(dresses, plans, dateKey);
+  const basePool = unwornDresses.length > 0 ? unwornDresses : availableDresses;
+  const suggestionPool = avoidPreviousDayCategory(basePool, plans, dateKey);
   if (suggestionPool.length === 0) return null;
 
   const randomIndex = Math.floor(Math.random() * suggestionPool.length);

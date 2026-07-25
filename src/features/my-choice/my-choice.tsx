@@ -17,6 +17,7 @@ import { SymbolView } from 'expo-symbols';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useThemeMode } from '@/context/theme-mode';
 import { addDays, fromDateKey, monthRange, startOfMonth, toDateKey } from '@/lib/dates';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -48,6 +49,7 @@ const todayKey = () => toDateKey(new Date());
 
 export function MyChoice({ initialSection = 'today' }: Props) {
   const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
   const [section, setSection] = useState<Section>(initialSection);
   const [user, setUser] = useState<User | null>(null);
   const [isBooting, setIsBooting] = useState(true);
@@ -122,7 +124,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
 
   const refresh = useCallback(async () => {
     const current = todayKey();
-    const from = toDateKey(addDays(fromDateKey(current), -14));
+    const from = '2000-01-01';
     const to = toDateKey(addDays(fromDateKey(current), 45));
     const [nextDressResponse, nextPlans] = await Promise.all([
       myChoiceApi.listDresses({ limit: 100 }),
@@ -639,9 +641,23 @@ export function MyChoice({ initialSection = 'today' }: Props) {
               </ThemedText>
               <ThemedText type="subtitle">{user.name}</ThemedText>
             </View>
-            <Pressable accessibilityRole="button" onPress={handleSignOut} style={[styles.iconButton, { backgroundColor: theme.backgroundSelected }]}>
-              <SymbolView name={{ ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' }} size={20} tintColor={theme.text} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                accessibilityRole="switch"
+                accessibilityState={{ checked: mode === 'dark' }}
+                accessibilityLabel="Toggle dark mode"
+                onPress={toggleMode}
+                style={[styles.iconButton, { backgroundColor: theme.backgroundSelected }]}>
+                <SymbolView
+                  name={mode === 'dark' ? { ios: 'sun.max', android: 'light_mode', web: 'light_mode' } : { ios: 'moon', android: 'dark_mode', web: 'dark_mode' }}
+                  size={20}
+                  tintColor={theme.text}
+                />
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={handleSignOut} style={[styles.iconButton, { backgroundColor: theme.backgroundSelected }]}>
+                <SymbolView name={{ ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' }} size={20} tintColor={theme.text} />
+              </Pressable>
+            </View>
           </View>
 
           <Animated.View
