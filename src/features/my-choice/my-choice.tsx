@@ -4,7 +4,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Platform,
@@ -24,12 +23,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { AuthScreen } from './components/auth-screen';
 import { CalendarSection } from './components/calendar-section';
 import { DressPickerModal } from './components/dress-picker-modal';
-import { FloatingMenu } from './components/shared';
+import { AppSkeleton, FloatingMenu, NetworkErrorPanel } from './components/shared';
 import { DressCalendarModal, EditDressModal, PauseSuggestionModal } from './components/outfit-action-modals';
 import { OutfitsSection } from './components/outfits-section';
 import { TodaySection } from './components/today-section';
 import { UploadDressModal } from './components/upload-dress-modal';
-import { clearToken, loadToken, myChoiceApi, saveToken } from './services/my-choice-api';
+import { clearToken, isNetworkError, loadToken, myChoiceApi, saveToken } from './services/my-choice-api';
 import { myChoiceStyles as styles } from './styles';
 import type { AuthMode, Dress, DressCategory, DressCategoryFilter, PlannedOutfit, Section, SuggestionPauseDuration, User } from './types';
 import { pickRandomSuggestion } from './utils/suggestions';
@@ -54,6 +53,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   const [isBooting, setIsBooting] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState('');
+  const [networkError, setNetworkError] = useState('');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
@@ -65,12 +65,16 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   const [outfitPage, setOutfitPage] = useState(1);
   const [outfitPages, setOutfitPages] = useState(1);
   const [outfitTotal, setOutfitTotal] = useState(0);
+  const [isOutfitsLoading, setIsOutfitsLoading] = useState(false);
+  const [outfitsError, setOutfitsError] = useState('');
   const [pickerDresses, setPickerDresses] = useState<Dress[]>([]);
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerCategory, setPickerCategory] = useState<DressCategoryFilter>('all');
   const [pickerPage, setPickerPage] = useState(1);
   const [pickerPages, setPickerPages] = useState(1);
   const [pickerTotal, setPickerTotal] = useState(0);
+  const [isPickerLoading, setIsPickerLoading] = useState(false);
+  const [pickerError, setPickerError] = useState('');
   const [plans, setPlans] = useState<PlannedOutfit[]>([]);
   const [selectedDate, setSelectedDate] = useState(todayKey());
   const [visibleMonth, setVisibleMonth] = useState(startOfMonth(new Date()));
@@ -86,6 +90,8 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   const [editCategory, setEditCategory] = useState<DressCategory>('modern');
   const [historyMonth, setHistoryMonth] = useState(startOfMonth(new Date()));
   const [historyPlans, setHistoryPlans] = useState<PlannedOutfit[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
   const [actionModal, setActionModal] = useState<'pause' | 'edit' | 'calendar' | null>(null);
   const sectionProgress = useMemo(() => new Animated.Value(1), []);
 
@@ -129,29 +135,49 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   }, []);
 
   const loadOutfitDresses = useCallback(async () => {
-    const response = await myChoiceApi.listDresses({
-      category: outfitCategory,
-      limit: WARDROBE_PAGE_SIZE,
-      page: outfitPage,
-      search: outfitSearch,
-    });
-    setOutfitDresses(response.items);
-    setOutfitPage(response.page);
-    setOutfitPages(response.pages);
-    setOutfitTotal(response.total);
+    try {
+      setIsOutfitsLoading(true);
+      setOutfitsError('');
+      const response = await myChoiceApi.listDresses({
+        category: outfitCategory,
+        limit: WARDROBE_PAGE_SIZE,
+        page: outfitPage,
+        search: outfitSearch,
+      });
+      setOutfitDresses(response.items);
+      setOutfitPage(response.page);
+      setOutfitPages(response.pages);
+      setOutfitTotal(response.total);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not load outfits.';
+      if (isNetworkError(error)) setOutfitsError(message);
+      else setStatus(message);
+    } finally {
+      setIsOutfitsLoading(false);
+    }
   }, [outfitCategory, outfitPage, outfitSearch]);
 
   const loadPickerDresses = useCallback(async () => {
-    const response = await myChoiceApi.listDresses({
-      category: pickerCategory,
-      limit: PICKER_PAGE_SIZE,
-      page: pickerPage,
-      search: pickerSearch,
-    });
-    setPickerDresses(response.items);
-    setPickerPage(response.page);
-    setPickerPages(response.pages);
-    setPickerTotal(response.total);
+    try {
+      setIsPickerLoading(true);
+      setPickerError('');
+      const response = await myChoiceApi.listDresses({
+        category: pickerCategory,
+        limit: PICKER_PAGE_SIZE,
+        page: pickerPage,
+        search: pickerSearch,
+      });
+      setPickerDresses(response.items);
+      setPickerPage(response.page);
+      setPickerPages(response.pages);
+      setPickerTotal(response.total);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not load dresses.';
+      if (isNetworkError(error)) setPickerError(message);
+      else setStatus(message);
+    } finally {
+      setIsPickerLoading(false);
+    }
   }, [pickerCategory, pickerPage, pickerSearch]);
 
   const openAutomaticSuggestion = useCallback(
@@ -175,9 +201,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   useEffect(() => {
     if (!user || section !== 'outfits') return;
     const timeout = setTimeout(() => {
-      loadOutfitDresses().catch((error) => {
-        setStatus(error instanceof Error ? error.message : 'Could not load outfits.');
-      });
+      loadOutfitDresses();
     }, 0);
     return () => clearTimeout(timeout);
   }, [loadOutfitDresses, section, user]);
@@ -185,38 +209,42 @@ export function MyChoice({ initialSection = 'today' }: Props) {
   useEffect(() => {
     if (!user || !isPickerOpen || suggestedDress) return;
     const timeout = setTimeout(() => {
-      loadPickerDresses().catch((error) => {
-        setStatus(error instanceof Error ? error.message : 'Could not load dresses.');
-      });
+      loadPickerDresses();
     }, 0);
     return () => clearTimeout(timeout);
   }, [isPickerOpen, loadPickerDresses, suggestedDress, user]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function boot() {
-      try {
-        const token = await loadToken();
-        if (!token) return;
-        const profile = await myChoiceApi.profile();
-        if (!isMounted) return;
-        setUser(profile);
-        const { nextDresses, nextPlans } = await refresh();
-        await openAutomaticSuggestion(nextDresses, nextPlans);
-      } catch (error) {
+  const bootSession = useCallback(async (isMounted: () => boolean = () => true) => {
+    try {
+      setIsBooting(true);
+      setNetworkError('');
+      const token = await loadToken();
+      if (!token) return;
+      const profile = await myChoiceApi.profile();
+      if (!isMounted()) return;
+      setUser(profile);
+      const { nextDresses, nextPlans } = await refresh();
+      if (!isMounted()) return;
+      await openAutomaticSuggestion(nextDresses, nextPlans);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        setNetworkError(error.message);
+      } else {
         await clearToken();
         setStatus(error instanceof Error ? error.message : 'Please sign in again.');
-      } finally {
-        if (isMounted) setIsBooting(false);
       }
+    } finally {
+      if (isMounted()) setIsBooting(false);
     }
+  }, [openAutomaticSuggestion, refresh]);
 
-    boot();
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve().then(() => bootSession(() => isMounted));
     return () => {
       isMounted = false;
     };
-  }, [openAutomaticSuggestion, refresh]);
+  }, [bootSession]);
 
   useEffect(() => {
     async function finishGoogleLogin() {
@@ -295,23 +323,33 @@ export function MyChoice({ initialSection = 'today' }: Props) {
     setPickerSearch('');
     setPickerCategory('all');
     setPickerPage(1);
+    setPickerError('');
+    setPickerDresses([]);
     setIsPickerOpen(true);
 
-    if (preferSuggestion) {
-      const suggestion = pickRandomSuggestion(dresses, plans, dateKey);
-      if (suggestion) setSuggestedDress(suggestion);
+    const suggestion = preferSuggestion ? pickRandomSuggestion(dresses, plans, dateKey) : null;
+
+    if (suggestion) {
+      setSuggestedDress(suggestion);
     } else {
       setSuggestedDress(null);
     }
 
-    try {
-      const response = await myChoiceApi.listDresses({ limit: PICKER_PAGE_SIZE, page: 1 });
-      setPickerDresses(response.items);
-      setPickerPage(response.page);
-      setPickerPages(response.pages);
-      setPickerTotal(response.total);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Could not load dresses.');
+    if (!suggestion) {
+      try {
+        setIsPickerLoading(true);
+        const response = await myChoiceApi.listDresses({ limit: PICKER_PAGE_SIZE, page: 1 });
+        setPickerDresses(response.items);
+        setPickerPage(response.page);
+        setPickerPages(response.pages);
+        setPickerTotal(response.total);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Could not load dresses.';
+        if (isNetworkError(error)) setPickerError(message);
+        else setStatus(message);
+      } finally {
+        setIsPickerLoading(false);
+      }
     }
   }
 
@@ -439,10 +477,17 @@ export function MyChoice({ initialSection = 'today' }: Props) {
     const from = toDateKey(monthRange(month)[0]);
     const to = toDateKey(monthRange(month).at(-1) ?? month);
     try {
+      setIsHistoryLoading(true);
+      setHistoryError('');
+      setHistoryPlans([]);
       const nextPlans = await myChoiceApi.listPlans(from, to, dress._id);
       setHistoryPlans(nextPlans);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Could not load dress calendar.');
+      const message = error instanceof Error ? error.message : 'Could not load dress calendar.';
+      if (isNetworkError(error)) setHistoryError(message);
+      else setStatus(message);
+    } finally {
+      setIsHistoryLoading(false);
     }
   }
 
@@ -525,9 +570,22 @@ export function MyChoice({ initialSection = 'today' }: Props) {
 
   if (isBooting) {
     return (
-      <ThemedView style={styles.centered}>
-        <ActivityIndicator />
-        <ThemedText style={styles.muted}>Opening your wardrobe...</ThemedText>
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <AppSkeleton />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
+  if (networkError) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.networkPage}>
+            <NetworkErrorPanel message={networkError} onRetry={() => bootSession()} />
+          </View>
+        </SafeAreaView>
       </ThemedView>
     );
   }
@@ -629,6 +687,8 @@ export function MyChoice({ initialSection = 'today' }: Props) {
               <OutfitsSection
                 category={outfitCategory}
                 dresses={outfitDresses}
+                error={outfitsError}
+                isLoading={isOutfitsLoading}
                 page={outfitPage}
                 pages={outfitPages}
                 search={outfitSearch}
@@ -644,6 +704,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
                   setOutfitPage(1);
                 }}
                 onPickDress={(dress) => assignDress(selectedDate, dress)}
+                onRetry={loadOutfitDresses}
                 onUploadPress={openUploadPicker}
               />
             )}
@@ -663,6 +724,9 @@ export function MyChoice({ initialSection = 'today' }: Props) {
         category={pickerCategory}
         date={selectedDate}
         dresses={pickerDresses}
+        error={pickerError}
+        isBusy={isBusy}
+        isLoading={isPickerLoading}
         page={pickerPage}
         pages={pickerPages}
         suggestedDress={suggestedDress}
@@ -686,6 +750,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
         }}
         onPageChange={setPickerPage}
         onPick={(dress) => assignDress(selectedDate, dress)}
+        onRetry={loadPickerDresses}
       />
       <UploadDressModal
         category={dressCategory}
@@ -706,6 +771,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
       <PauseSuggestionModal
         dress={selectedDressAction}
         duration={pauseDuration}
+        isBusy={isBusy}
         visible={actionModal === 'pause'}
         onCancel={() => setActionModal(null)}
         onConfirm={confirmPauseSuggestion}
@@ -713,6 +779,7 @@ export function MyChoice({ initialSection = 'today' }: Props) {
       />
       <EditDressModal
         category={editCategory}
+        isBusy={isBusy}
         name={editName}
         visible={actionModal === 'edit'}
         onCancel={() => setActionModal(null)}
@@ -722,11 +789,16 @@ export function MyChoice({ initialSection = 'today' }: Props) {
       />
       <DressCalendarModal
         dress={selectedDressAction}
+        error={historyError}
+        isLoading={isHistoryLoading}
         month={historyMonth}
         plans={historyPlans}
         visible={actionModal === 'calendar'}
         onBack={() => setActionModal(null)}
         onMonthChange={changeHistoryMonth}
+        onRetry={() => {
+          if (selectedDressAction) loadDressHistory(selectedDressAction, historyMonth);
+        }}
       />
     </ThemedView>
   );

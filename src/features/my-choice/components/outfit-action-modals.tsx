@@ -8,6 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 import { myChoiceStyles as styles } from '../styles';
 import type { Dress, DressCategory, PlannedOutfit, SuggestionPauseDuration } from '../types';
+import { CalendarHistorySkeleton, NetworkErrorPanel, SkeletonBlock } from './shared';
 
 const pauseOptions: { label: string; value: SuggestionPauseDuration }[] = [
   { label: 'For a week', value: 'week' },
@@ -25,6 +26,7 @@ export function PauseSuggestionModal({
   dress,
   duration,
   visible,
+  isBusy,
   onCancel,
   onConfirm,
   onDurationChange,
@@ -32,6 +34,7 @@ export function PauseSuggestionModal({
   dress: Dress | null;
   duration: SuggestionPauseDuration;
   visible: boolean;
+  isBusy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
   onDurationChange: (duration: SuggestionPauseDuration) => void;
@@ -68,9 +71,13 @@ export function PauseSuggestionModal({
               );
             })}
           </View>
-          <Pressable onPress={onConfirm} style={styles.primaryButton}>
-            <ThemedText style={styles.primaryButtonText}>Confirm</ThemedText>
-          </Pressable>
+          {isBusy ? (
+            <SkeletonBlock style={styles.skeletonButtonFull} />
+          ) : (
+            <Pressable onPress={onConfirm} style={styles.primaryButton}>
+              <ThemedText style={styles.primaryButtonText}>Confirm</ThemedText>
+            </Pressable>
+          )}
           </ThemedView>
         </Pressable>
       </Pressable>
@@ -82,6 +89,7 @@ export function EditDressModal({
   category,
   name,
   visible,
+  isBusy,
   onCancel,
   onCategoryChange,
   onNameChange,
@@ -90,6 +98,7 @@ export function EditDressModal({
   category: DressCategory;
   name: string;
   visible: boolean;
+  isBusy: boolean;
   onCancel: () => void;
   onCategoryChange: (category: DressCategory) => void;
   onNameChange: (name: string) => void;
@@ -137,9 +146,13 @@ export function EditDressModal({
               </Pressable>
             ))}
           </View>
-          <Pressable onPress={onSave} style={styles.primaryButton}>
-            <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>
-          </Pressable>
+          {isBusy ? (
+            <SkeletonBlock style={styles.skeletonButtonFull} />
+          ) : (
+            <Pressable onPress={onSave} style={styles.primaryButton}>
+              <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>
+            </Pressable>
+          )}
           </ThemedView>
         </Pressable>
       </Pressable>
@@ -152,15 +165,21 @@ export function DressCalendarModal({
   month,
   plans,
   visible,
+  isLoading,
+  error,
   onBack,
   onMonthChange,
+  onRetry,
 }: {
   dress: Dress | null;
   month: Date;
   plans: PlannedOutfit[];
   visible: boolean;
+  isLoading: boolean;
+  error: string;
   onBack: () => void;
   onMonthChange: (month: Date) => void;
+  onRetry: () => void;
 }) {
   const theme = useTheme();
   const days = monthRange(month);
@@ -216,17 +235,23 @@ export function DressCalendarModal({
               );
             })}
           </View>
-          <ScrollView contentContainerStyle={styles.modalList}>
-            {plans.length ? (
-              plans.map((plan) => (
-                <ThemedText key={plan._id} type="smallBold">
-                  {formatDisplayDate(plan.date)}
-                </ThemedText>
-              ))
-            ) : (
-              <ThemedText themeColor="textSecondary">This dress was not worn in this month.</ThemedText>
-            )}
-          </ScrollView>
+          {isLoading ? (
+            <CalendarHistorySkeleton />
+          ) : error ? (
+            <NetworkErrorPanel message={error} onRetry={onRetry} />
+          ) : (
+            <ScrollView contentContainerStyle={styles.modalList}>
+              {plans.length ? (
+                plans.map((plan) => (
+                  <ThemedText key={plan._id} type="smallBold">
+                    {formatDisplayDate(plan.date)}
+                  </ThemedText>
+                ))
+              ) : (
+                <ThemedText themeColor="textSecondary">This dress was not worn in this month.</ThemedText>
+              )}
+            </ScrollView>
+          )}
           </ThemedView>
         </Pressable>
       </Pressable>

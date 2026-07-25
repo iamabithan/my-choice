@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 const sky = '#0EA5E9';
 const skySoft = '#E0F2FE';
@@ -14,6 +14,14 @@ export const myChoiceStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.three,
+  },
+  networkPage: {
+    flex: 1,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    justifyContent: 'center',
+    padding: Spacing.three,
   },
   content: {
     alignSelf: 'center',
@@ -101,6 +109,87 @@ export const myChoiceStyles = StyleSheet.create({
   },
   muted: { opacity: 0.72 },
   statusText: { color: '#E43D12' },
+  skeletonBlock: {
+    opacity: 0.62,
+    overflow: 'hidden',
+  },
+  skeletonStack: {
+    gap: Spacing.two,
+    flex: 1,
+  },
+  skeletonLine: {
+    width: 112,
+    height: 14,
+    borderRadius: 7,
+  },
+  skeletonWideLine: {
+    width: '82%',
+    height: 14,
+    borderRadius: 7,
+  },
+  skeletonShortLine: {
+    width: 74,
+    height: 12,
+    borderRadius: 6,
+  },
+  skeletonTitleLine: {
+    width: 148,
+    height: 22,
+    borderRadius: 11,
+  },
+  skeletonPageTitle: {
+    width: 132,
+    height: 30,
+    borderRadius: 15,
+  },
+  skeletonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  skeletonHeroCard: {
+    width: '100%',
+    aspectRatio: 4 / 5,
+    borderRadius: 18,
+  },
+  skeletonPanel: {
+    borderRadius: 18,
+    padding: Spacing.three,
+    gap: Spacing.three,
+    borderWidth: 1,
+    borderColor: skyBorder,
+  },
+  skeletonButton: {
+    width: 132,
+    height: 44,
+    borderRadius: 14,
+  },
+  skeletonButtonFull: {
+    width: '100%',
+    height: 50,
+    borderRadius: 16,
+  },
+  skeletonFilter: {
+    width: 116,
+    minHeight: 46,
+    borderRadius: 14,
+  },
+  skeletonHistoryLine: {
+    width: '74%',
+    height: 18,
+    borderRadius: 9,
+  },
+  networkPanel: {
+    borderRadius: 18,
+    padding: Spacing.four,
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderColor: skyBorder,
+    alignItems: 'flex-start',
+  },
+  networkCopy: {
+    lineHeight: 21,
+  },
   primaryButton: {
     minHeight: 50,
     borderRadius: 16,
@@ -302,6 +391,32 @@ export const myChoiceStyles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.one,
   },
+  filterWrap: {
+    position: 'relative',
+    zIndex: 5,
+  },
+  filterMenu: {
+    position: 'absolute',
+    top: 52,
+    right: 0,
+    minWidth: 164,
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#0369A1',
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  filterOption: {
+    minHeight: 44,
+    paddingHorizontal: Spacing.three,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
   dressGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -413,6 +528,7 @@ export const myChoiceStyles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
   },
   modalHandle: {
@@ -445,6 +561,38 @@ export const myChoiceStyles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: Spacing.three,
+  },
+  modalActionButton: {
+    flex: 1,
+    paddingHorizontal: Spacing.two,
+  },
+  imagePreviewBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.three,
+    backgroundColor: 'rgba(7, 19, 31, 0.82)',
+  },
+  imagePreviewSheet: {
+    width: '100%',
+    height: '82%',
+    maxWidth: 640,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePreviewClose: {
+    position: 'absolute',
+    top: Spacing.two,
+    right: Spacing.two,
+    zIndex: 2,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   uploadPreview: {
     width: '100%',

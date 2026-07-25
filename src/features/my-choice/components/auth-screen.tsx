@@ -55,10 +55,11 @@ export function AuthScreen({
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.authKeyboard}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.authHero}>
             <Image source={require('../../../../assets/images/icon.png')} style={styles.authLogo} contentFit="cover" />

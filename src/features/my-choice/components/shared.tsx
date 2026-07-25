@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -129,6 +130,134 @@ export function EmptyPanel({
       <Pressable onPress={onPress} style={styles.secondaryButton}>
         <ThemedText type="smallBold" style={styles.secondaryButtonText}>
           {action}
+        </ThemedText>
+      </Pressable>
+    </ThemedView>
+  );
+}
+
+export function SkeletonBlock({ style }: { style?: StyleProp<ViewStyle> }) {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.skeletonBlock,
+        { backgroundColor: theme.backgroundSelected },
+        style,
+      ]}
+    />
+  );
+}
+
+export function AppSkeleton() {
+  return (
+    <ThemedView style={styles.content}>
+      <View style={styles.header}>
+        <View style={styles.skeletonStack}>
+          <SkeletonBlock style={styles.skeletonShortLine} />
+          <SkeletonBlock style={styles.skeletonTitleLine} />
+        </View>
+        <SkeletonBlock style={styles.skeletonIcon} />
+      </View>
+      <View style={styles.section}>
+        <SkeletonBlock style={styles.skeletonPageTitle} />
+        <SkeletonBlock style={styles.skeletonHeroCard} />
+        <View style={styles.skeletonPanel}>
+          <SkeletonBlock style={styles.skeletonLine} />
+          <SkeletonBlock style={styles.skeletonWideLine} />
+          <SkeletonBlock style={styles.skeletonButton} />
+        </View>
+      </View>
+    </ThemedView>
+  );
+}
+
+export function OutfitsSkeleton() {
+  return (
+    <View style={styles.dressGrid}>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <View key={index} style={styles.dressCard}>
+          <SkeletonBlock style={styles.dressImage} />
+          <SkeletonBlock style={styles.skeletonLine} />
+          <SkeletonBlock style={styles.skeletonShortLine} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function PickerControlsSkeleton() {
+  return (
+    <View style={styles.searchRow}>
+      <SkeletonBlock style={[styles.searchInput, styles.searchGrow]} />
+      <SkeletonBlock style={styles.skeletonFilter} />
+    </View>
+  );
+}
+
+export function PickerListSkeleton() {
+  return (
+    <>
+      <PickerControlsSkeleton />
+      <View style={styles.dressGrid}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <View key={index} style={styles.dressCard}>
+            <SkeletonBlock style={styles.dressImage} />
+            <SkeletonBlock style={styles.skeletonLine} />
+            <SkeletonBlock style={styles.skeletonShortLine} />
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+export function ModalDressListSkeleton() {
+  return (
+    <View style={styles.modalList}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <View key={index} style={styles.modalDressRow}>
+          <SkeletonBlock style={styles.modalDressImage} />
+          <View style={styles.modalDressName}>
+            <SkeletonBlock style={styles.skeletonLine} />
+            <SkeletonBlock style={styles.skeletonShortLine} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function CalendarHistorySkeleton() {
+  return (
+    <View style={styles.modalList}>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <SkeletonBlock key={index} style={styles.skeletonHistoryLine} />
+      ))}
+    </View>
+  );
+}
+
+export function NetworkErrorPanel({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <ThemedView type="backgroundElement" style={styles.networkPanel}>
+      <SymbolView name={{ ios: 'wifi.exclamationmark', android: 'wifi_off', web: 'wifi_off' }} size={30} tintColor="#E43D12" />
+      <ThemedText type="subtitle" style={styles.emptyTitle}>
+        Network error
+      </ThemedText>
+      <ThemedText themeColor="textSecondary" style={styles.networkCopy}>
+        {message}
+      </ThemedText>
+      <Pressable onPress={onRetry} style={styles.secondaryButton}>
+        <ThemedText type="smallBold" style={styles.secondaryButtonText}>
+          Retry
         </ThemedText>
       </Pressable>
     </ThemedView>

@@ -22,6 +22,17 @@ const endpoints = {
 
 let authToken: string | null = null;
 
+export class NetworkError extends Error {
+  constructor() {
+    super('Could not connect to My Choice. Check your internet connection and try again.');
+    this.name = 'NetworkError';
+  }
+}
+
+export function isNetworkError(error: unknown) {
+  return error instanceof NetworkError;
+}
+
 export async function loadToken() {
   authToken = await AsyncStorage.getItem(TOKEN_KEY);
   return authToken;
@@ -38,15 +49,21 @@ export async function clearToken() {
 }
 
 async function request<T>(path: string, options: RequestInit = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...options.headers,
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        Accept: 'application/json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new NetworkError();
+  }
 
   if (!response.ok) {
     let message = 'Something went wrong. Please try again.';

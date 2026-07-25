@@ -2,7 +2,7 @@ import type * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -11,6 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 import { myChoiceStyles as styles } from '../styles';
 import type { DressCategory } from '../types';
+import { SkeletonBlock } from './shared';
 
 type Props = {
   category: DressCategory;
@@ -118,16 +119,15 @@ export function UploadDressModal({
                 </View>
               )}
             </View>
-            <Pressable
-              disabled={isBusy}
-              onPress={onSubmit}
-              style={({ pressed }) => [styles.primaryButton, { opacity: pressed || isBusy ? 0.78 : 1 }]}>
-              {isBusy ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
+            {isBusy ? (
+              <SkeletonBlock style={styles.skeletonButtonFull} />
+            ) : (
+              <Pressable
+                onPress={onSubmit}
+                style={({ pressed }) => [styles.primaryButton, { opacity: pressed ? 0.78 : 1 }]}>
                 <ThemedText style={styles.primaryButtonText}>Upload dress</ThemedText>
-              )}
-            </Pressable>
+              </Pressable>
+            )}
           </ScrollView>
           </ThemedView>
         </Pressable>
