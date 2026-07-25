@@ -10,6 +10,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { myChoiceStyles as styles } from '../styles';
 import type { Dress, Section, SymbolName } from '../types';
 
+function isSuggestionPaused(dress: Dress) {
+  return (
+    dress.suggestionPausedForever ||
+    (dress.suggestionPausedUntil ? Date.parse(dress.suggestionPausedUntil) > Date.now() : false)
+  );
+}
+
 export function DressFeature({ title, dress, compact }: { title: string; dress: Dress; compact?: boolean }) {
   return (
     <ThemedView type="backgroundElement" style={[styles.featureCard, compact && styles.compactFeature]}>
@@ -47,10 +54,13 @@ export function DressCard({
   isMenuOpen?: boolean;
   onCloseMenu?: () => void;
   onMenuToggle?: () => void;
-  onOption?: (action: 'pause' | 'edit' | 'calendar' | 'delete') => void;
+  onOption?: (action: 'pause' | 'resume' | 'edit' | 'calendar' | 'delete') => void;
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const pauseAction = isSuggestionPaused(dress)
+    ? { key: 'resume', label: 'Suggest dress', icon: { ios: 'bell', android: 'notifications_active', web: 'notifications_active' } }
+    : { key: 'pause', label: "Don't suggest", icon: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' } };
 
   return (
     <Pressable
@@ -76,11 +86,11 @@ export function DressCard({
       {isMenuOpen && !!onOption && (
         <View style={[styles.dressOptionsMenu, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
           {([
-            { key: 'pause', label: "Don't suggest", icon: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' } },
+            pauseAction,
             { key: 'edit', label: 'Edit', icon: { ios: 'pencil', android: 'edit', web: 'edit' } },
             { key: 'calendar', label: 'View calendar', icon: { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' } },
             { key: 'delete', label: 'Delete', icon: { ios: 'trash', android: 'delete', web: 'delete' } },
-          ] as { key: 'pause' | 'edit' | 'calendar' | 'delete'; label: string; icon: SymbolName }[]).map((item) => (
+          ] as { key: 'pause' | 'resume' | 'edit' | 'calendar' | 'delete'; label: string; icon: SymbolName }[]).map((item) => (
             <Pressable
               key={item.key}
               accessibilityRole="button"

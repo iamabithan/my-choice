@@ -25,7 +25,7 @@ type Props = {
   search: string;
   total: number;
   onCategoryChange: (category: DressCategoryFilter) => void;
-  onDressOption: (dress: Dress, action: 'pause' | 'edit' | 'calendar' | 'delete') => void;
+  onDressOption: (dress: Dress, action: 'pause' | 'resume' | 'edit' | 'calendar' | 'delete') => void;
   onPageChange: (page: number) => void;
   onSearchChange: (value: string) => void;
   onPickDress: (dress: Dress) => void;

@@ -491,9 +491,29 @@ export function MyChoice({ initialSection = 'today' }: Props) {
     ]);
   }
 
-  function openDressAction(dress: Dress, action: 'pause' | 'edit' | 'calendar' | 'delete') {
+  async function resumeDressSuggestion(dress: Dress) {
+    try {
+      setIsBusy(true);
+      setStatus('');
+      await myChoiceApi.resumeDressSuggestion(dress._id);
+      await refresh();
+      await loadOutfitDresses();
+      if (isPickerOpen) await loadPickerDresses();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not enable suggestions for this dress.');
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  function openDressAction(dress: Dress, action: 'pause' | 'resume' | 'edit' | 'calendar' | 'delete') {
     if (action === 'delete') {
       deleteDress(dress);
+      return;
+    }
+
+    if (action === 'resume') {
+      resumeDressSuggestion(dress);
       return;
     }
 

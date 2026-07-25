@@ -140,6 +140,11 @@ export const myChoiceApi = {
       body: JSON.stringify({ duration }),
     });
   },
+  resumeDressSuggestion(id: string) {
+    return request<Dress>(`${endpoints.dresses}/${id}/suggestion-pause`, {
+      method: 'DELETE',
+    });
+  },
   createUpload(contentType: string) {
     return request<UploadTicket>(endpoints.uploads, {
       method: 'POST',
